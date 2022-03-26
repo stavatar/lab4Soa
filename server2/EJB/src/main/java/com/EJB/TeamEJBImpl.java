@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateless;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -39,6 +40,10 @@ public class TeamEJBImpl implements TeamEJB, Serializable {
     Client client= FactoriesKt.getHttpClient();
     @Override
     public String createTeam(String nameTeam, Set<Integer> idsHuman) {
+        if (nameTeam==null || nameTeam.isEmpty()|| idsHuman==null) {
+            throw new BadRequestException();
+        }
+
         Message message=new Message();
         Team teamTable=new Team(nameTeam);
         teamDAO.save(teamTable);
@@ -65,13 +70,19 @@ public class TeamEJBImpl implements TeamEJB, Serializable {
         return "Create Team with name=";
     }
 
-    public String updateHuman(Long id_human, String newValue, String nameField){
+    public String updateHuman(Long id_human, String newValue, String nameField) {
+        if (id_human==null || newValue==null || nameField==null||newValue.isEmpty()) {
+            throw new BadRequestException();
+        }
         UpdateRespDTO updateRespDTO =new UpdateRespDTO(id_human,nameField,newValue);
         Response response=client.target(URI_HUMAN).request(MediaType.APPLICATION_JSON).put(Entity.entity(updateRespDTO, "application/json"));
         return response.readEntity(String.class);
     }
     @Override
-    public String changeMood(int id_team) {
+    public String changeMood(Long id_team) {
+        if (id_team==null) {
+            throw new BadRequestException();
+        }
         Message message=new Message();
         Session session= HibernateUtil.getSessionFactory().openSession();
         Team team=teamDAO.getById((long) id_team);
@@ -90,6 +101,9 @@ public class TeamEJBImpl implements TeamEJB, Serializable {
 
     @Override
     public String test(String nameServer) {
+        if (nameServer==null || nameServer.isEmpty()) {
+            throw new BadRequestException();
+        }
         return nameServer;
     }
     @Override
@@ -114,7 +128,7 @@ public class TeamEJBImpl implements TeamEJB, Serializable {
         }
         head.put("data",array);
         head.put("code",1);
-        return array.toString();
+        return head.toString();
     }
     public String getHuman(Long id){
         Response response=client.target(URI_HUMAN+"/"+id).request().get();
